@@ -52,17 +52,21 @@
   .fr .field{flex:1;margin-bottom:10px;}
   .fr .field.narrow{flex:0 0 86px;}
 
-  /* 點擊式圖示選單（訊號 / 電量） */
-  .icon-select{
-    width:100%;display:flex;align-items:center;gap:9px;
-    border:1px solid var(--line);border-radius:10px;background:#fff;
-    padding:8px 11px;font-size:14px;font-family:inherit;color:#222;cursor:pointer;
+  /* 狀態列：訊號 / 電量 圓形鉛筆鈕（與徽章、顏色編輯列同風格） */
+  .status-edit-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .status-edit-row .icon-btn{
+    width:46px;height:46px;border-radius:50%;border:1px solid var(--line);
+    background:#fff;cursor:pointer;flex-shrink:0;position:relative;
+    display:flex;align-items:center;justify-content:center;padding:0;
   }
-  .icon-select:hover{border-color:#bbb;}
-  .icon-select.open{border-color:#111;}
-  .icon-select .ic-preview{display:inline-flex;align-items:center;justify-content:center;min-width:30px;}
-  .icon-select .ic-name{flex:1;text-align:left;font-weight:600;}
-  .icon-select .ic-caret{color:#999;font-size:12px;}
+  .status-edit-row .icon-btn .pen{
+    position:absolute;right:-3px;bottom:-3px;width:18px;height:18px;
+    background:#111;color:#fff;border-radius:50%;font-size:10px;
+    display:flex;align-items:center;justify-content:center;
+    border:2px solid #fff;
+  }
+  .status-edit-row .color-cap{margin-right:8px;}
+  .ic-preview{display:inline-flex;align-items:center;justify-content:center;}
   .ic-preview svg{height:15px;width:auto;display:block;}
 
   /* 訊號 / 電量 彈窗選項 */
@@ -390,20 +394,19 @@
         <div class="field narrow"><label>電量%</label><input type="text" id="fBattNum" value="96" maxlength="4"></div>
       </div>
       <div class="field">
-        <label>訊號強度（點我選格數）</label>
-        <button type="button" class="icon-select" id="signalSelect">
-          <span class="ic-preview" id="signalPreview"></span>
-          <span class="ic-name" id="signalName">滿格</span>
-          <span class="ic-caret">▾</span>
-        </button>
-      </div>
-      <div class="field">
-        <label>電量圖示（點我選程度）</label>
-        <button type="button" class="icon-select" id="battSelect">
-          <span class="ic-preview" id="battPreview"></span>
-          <span class="ic-name" id="battName">滿電</span>
-          <span class="ic-caret">▾</span>
-        </button>
+        <label>訊號強度與電量圖示（點鉛筆更換）</label>
+        <div class="status-edit-row">
+          <button type="button" class="icon-btn" id="signalSelect" title="點我選訊號格數">
+            <span class="ic-preview" id="signalPreview"></span>
+            <span class="pen">✎</span>
+          </button>
+          <span class="color-cap" id="signalName">滿格</span>
+          <button type="button" class="icon-btn" id="battSelect" title="點我選電量程度">
+            <span class="ic-preview" id="battPreview"></span>
+            <span class="pen">✎</span>
+          </button>
+          <span class="color-cap" id="battName">滿電</span>
+        </div>
       </div>
     </div>
 
@@ -1152,36 +1155,40 @@ function roundRectPath(ctx,x,y,w,h,r){
   ctx.arcTo(x,y,x+w,y,r);
   ctx.closePath();
 }
-function showBadgeShadow(){
+function buildBadgeShadow(){
   const pill=document.getElementById('badgePill');
   const sh=document.getElementById('badgeShadow');
-  if(pill.classList.contains('hidden')){sh.style.display='none';return;}
+  if(pill.classList.contains('hidden')){sh.removeAttribute('src');return false;}
   const w=pill.offsetWidth, h=pill.offsetHeight, pad=28;
   const cw=w+pad*2, ch=h+pad*2;
   const c=document.createElement('canvas'); c.width=cw; c.height=ch;
   const x=c.getContext('2d');
-  x.shadowColor='rgba(0,0,0,0.28)'; x.shadowBlur=15; x.shadowOffsetY=6;
+  // 畫出柔和陰影
+  x.shadowColor='rgba(0,0,0,0.16)'; x.shadowBlur=16; x.shadowOffsetY=5;
   x.fillStyle='#000';
-  roundRectPath(x,pad,pad,w,h,h/2); x.fill();   // 中央實心會被白色徽章蓋住，只留下四周柔和陰影
+  roundRectPath(x,pad,pad,w,h,h/2); x.fill();
+  // 把中央實心挖掉，只留四周暈開的陰影（避免邊緣透出深色）
+  x.shadowColor='transparent';
+  x.globalCompositeOperation='destination-out';
+  roundRectPath(x,pad,pad,w,h,h/2); x.fill();
   sh.src=c.toDataURL('image/png');
   sh.style.width=cw+'px'; sh.style.height=ch+'px';
   sh.style.left=(pill.offsetLeft-pad)+'px';
   sh.style.top=(pill.offsetTop-pad)+'px';
-  sh.style.display='block';
+  return true;
 }
 async function renderCanvas(){
   document.activeElement&&document.activeElement.blur();
-  showBadgeShadow();
-  try{
-    return await html2canvas(captureEl,{scale:2,useCORS:true,backgroundColor:'#ffffff',
-      onclone:(doc)=>{
-        // 只有輸出的圖片才顯示底端系統推廣區塊（一般元素的 class 變更 onclone 有效）
-        const pf=doc.getElementById('promoFooter'); if(pf) pf.classList.add('export-show');
-      }
-    });
-  } finally {
-    document.getElementById('badgeShadow').style.display='none';
-  }
+  // 陰影圖先準備好但保持隱藏（畫面不會閃現）；只在 html2canvas 的 clone 裡顯示
+  const hasShadow=buildBadgeShadow();
+  return await html2canvas(captureEl,{scale:2,useCORS:true,backgroundColor:'#ffffff',
+    onclone:(doc)=>{
+      // 只有輸出的圖片才顯示底端系統推廣區塊（一般元素的 class 變更 onclone 有效）
+      const pf=doc.getElementById('promoFooter'); if(pf) pf.classList.add('export-show');
+      const sc=doc.getElementById('badgeShadow');
+      if(sc&&hasShadow) sc.style.display='block';
+    }
+  });
 }
 /* 檔名：[名字]外送員簡介_YYYYMMDDhhmmss.png */
 function outFileName(){
