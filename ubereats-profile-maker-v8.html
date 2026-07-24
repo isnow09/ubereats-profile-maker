@@ -29,7 +29,13 @@
     background:var(--panel-bg);border-radius:20px;padding:22px;
     width:410px;flex-shrink:0;
   }
-  .panel h1{font-size:19px;margin-bottom:2px;letter-spacing:.5px;}
+  .site-head{
+    max-width:1180px;margin:0 auto;padding:34px 16px 0;
+    text-align:center;color:#fff;
+  }
+  .site-head h1{font-size:30px;font-weight:900;letter-spacing:2px;}
+  .site-head p{font-size:14px;color:#9a9a9a;margin-top:8px;letter-spacing:.5px;}
+  .panel-title{font-size:15px;font-weight:800;margin-bottom:6px;letter-spacing:1px;color:#333;}
   .panel .hint{font-size:12.5px;color:var(--sub);margin-bottom:14px;line-height:1.6;}
   .group{border-top:1px solid #e2e0da;padding:14px 0;}
   .group-title{
@@ -52,22 +58,23 @@
   .fr .field{flex:1;margin-bottom:10px;}
   .fr .field.narrow{flex:0 0 86px;}
 
-  /* 狀態列：訊號 / 電量 圓形鉛筆鈕（與徽章、顏色編輯列同風格） */
-  .status-edit-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
-  .status-edit-row .icon-btn{
-    width:46px;height:46px;border-radius:50%;border:1px solid var(--line);
+  /* 狀態列：單行編輯（欄位＋圓形鉛筆鈕） */
+  .statusbar-edit{align-items:flex-end;}
+  .statusbar-edit .field{min-width:0;}
+  .statusbar-edit .icon-btn{
+    width:38px;height:38px;border-radius:50%;border:1px solid var(--line);
     background:#fff;cursor:pointer;flex-shrink:0;position:relative;
     display:flex;align-items:center;justify-content:center;padding:0;
+    align-self:flex-end;margin-bottom:10px;
   }
-  .status-edit-row .icon-btn .pen{
-    position:absolute;right:-3px;bottom:-3px;width:18px;height:18px;
-    background:#111;color:#fff;border-radius:50%;font-size:10px;
+  .statusbar-edit .icon-btn .pen{
+    position:absolute;right:-4px;bottom:-4px;width:17px;height:17px;
+    background:#111;color:#fff;border-radius:50%;font-size:9px;
     display:flex;align-items:center;justify-content:center;
     border:2px solid #fff;
   }
-  .status-edit-row .color-cap{margin-right:8px;}
   .ic-preview{display:inline-flex;align-items:center;justify-content:center;}
-  .ic-preview svg{height:15px;width:auto;display:block;}
+  .ic-preview svg{height:14px;width:auto;display:block;}
 
   /* 訊號 / 電量 彈窗選項 */
   .status-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
@@ -373,40 +380,38 @@
 </head>
 <body>
 
+<header class="site-head">
+  <h1>外送員簡介產生器 🛵</h1>
+  <p>做一張仿外送 App 的趣味簡介圖，下載分享給朋友！</p>
+</header>
+
 <div class="app">
 
   <!-- ========== 編輯面板 ========== -->
   <div class="panel">
-    <h1>外送員簡介產生器 🛵</h1>
+    <h2 class="panel-title">編輯區</h2>
 
     <div class="group">
       <div class="group-title">範本
-        <button class="btn small" id="clearBtn">清空</button>
+        <button class="btn small" id="clearBtn">還原</button>
       </div>
       <div class="preset-chips" id="presetChips"></div>
     </div>
 
     <div class="group">
       <div class="group-title">狀態列</div>
-      <div class="fr">
+      <div class="fr statusbar-edit">
         <div class="field"><label>時間</label><input type="text" id="fTime" value="8:17" maxlength="5"></div>
         <div class="field"><label>訊號文字</label><input type="text" id="fSignal" value="5G" maxlength="6"></div>
-        <div class="field narrow"><label>電量%</label><input type="text" id="fBattNum" value="96" maxlength="4"></div>
-      </div>
-      <div class="field">
-        <label>訊號強度與電量圖示（點鉛筆更換）</label>
-        <div class="status-edit-row">
-          <button type="button" class="icon-btn" id="signalSelect" title="點我選訊號格數">
-            <span class="ic-preview" id="signalPreview"></span>
-            <span class="pen">✎</span>
-          </button>
-          <span class="color-cap" id="signalName">滿格</span>
-          <button type="button" class="icon-btn" id="battSelect" title="點我選電量程度">
-            <span class="ic-preview" id="battPreview"></span>
-            <span class="pen">✎</span>
-          </button>
-          <span class="color-cap" id="battName">滿電</span>
-        </div>
+        <button type="button" class="icon-btn" id="signalSelect" title="更換訊號強度">
+          <span class="ic-preview" id="signalPreview"></span>
+          <span class="pen">✎</span>
+        </button>
+        <div class="field"><label>電量%</label><input type="text" id="fBattNum" value="96" maxlength="4"></div>
+        <button type="button" class="icon-btn" id="battSelect" title="更換電量圖示">
+          <span class="ic-preview" id="battPreview"></span>
+          <span class="pen">✎</span>
+        </button>
       </div>
     </div>
 
@@ -763,12 +768,18 @@ presetChips.addEventListener('click',async e=>{
   await applyPreset(PRESETS[b.dataset.preset]);
   toast(`已套用「${b.dataset.preset}」`);
 });
+/* 還原成一進頁面時的預設內容 */
+const INIT_PRAISES=[
+  {emoji:'⏱️', bg:'#4f7df9', count:17, label:'快速有效率', url:null},
+  {emoji:'❤️', bg:'#3f5bd6', count:14, label:'細心外送',   url:null},
+  {emoji:'💬', bg:'#f6c344', count:14, label:'有效溝通',   url:null}
+];
 document.getElementById('clearBtn').addEventListener('click',()=>{
   ['fTime','fSignal','fBattNum','fBadge','fName','fSinceText','fCount','fCountLabel',
    'fRateLabel','fLang','fReasonTitle','fReason','fYear','fMonth','fRate'].forEach(id=>{
     const el=document.getElementById(id);
     if(!el)return;
-    el.value='';
+    el.value=el.defaultValue;          // HTML 裡的初始值
     el.dispatchEvent(new Event('input'));
   });
   renderSignal(4);
@@ -780,8 +791,14 @@ document.getElementById('clearBtn').addEventListener('click',()=>{
   zoomSlider.value=1;zoomSlider.disabled=true;resetBtn.disabled=true;
   setTheme('#0e8345');setThemeText('#ffffff');
   setBadgeEmoji('🏅');
-  praises=[];renderPraises();
-  toast('已清空，從零開始');
+  ['badgeToggle','reasonToggle','langToggle'].forEach(id=>{
+    const t=document.getElementById(id);
+    if(!t.checked){t.checked=true;t.dispatchEvent(new Event('change'));}
+  });
+  document.getElementById('badgePill').classList.remove('hidden');
+  praises=INIT_PRAISES.map(p=>({...p}));
+  renderPraises();
+  toast('已還原為預設內容');
 });
 
 async function applyPreset(p){
@@ -881,14 +898,12 @@ function renderSignal(level){
   const svg=signalSVG(sigLevel);
   document.getElementById('pSignalIco').innerHTML=svg;
   document.getElementById('signalPreview').innerHTML=svg;
-  document.getElementById('signalName').textContent=(SIGNAL_OPTS.find(o=>o.v===sigLevel)||{}).name||'';
 }
 function renderBattery(state){
   battState=BATTERY_MAP[state]?state:'full';
   const svg=batterySVG(battState);
   document.getElementById('pBattIco').innerHTML=svg;
   document.getElementById('battPreview').innerHTML=svg;
-  document.getElementById('battName').textContent=BATTERY_MAP[battState].name;
 }
 
 /* 訊號 / 電量 選擇彈窗（與選徽章相同的 modal 風格） */
@@ -1164,13 +1179,21 @@ function buildBadgeShadow(){
   const c=document.createElement('canvas'); c.width=cw; c.height=ch;
   const x=c.getContext('2d');
   // 畫出柔和陰影
-  x.shadowColor='rgba(0,0,0,0.16)'; x.shadowBlur=16; x.shadowOffsetY=5;
+  x.shadowColor='rgba(0,0,0,0.15)'; x.shadowBlur=14; x.shadowOffsetY=6;
   x.fillStyle='#000';
   roundRectPath(x,pad,pad,w,h,h/2); x.fill();
-  // 把中央實心挖掉，只留四周暈開的陰影（避免邊緣透出深色）
+  // 把中央實心挖掉（略放大 2px，避免貼邊透出深色）
   x.shadowColor='transparent';
   x.globalCompositeOperation='destination-out';
-  roundRectPath(x,pad,pad,w,h,h/2); x.fill();
+  roundRectPath(x,pad-2,pad-2,w+4,h+4,(h+4)/2); x.fill();
+  // 疊上由上而下的漸層遮罩：上緣與左右上側完全淡出，陰影只留在下方
+  x.globalCompositeOperation='destination-in';
+  const g=x.createLinearGradient(0,pad,0,pad+h+12);
+  g.addColorStop(0,'rgba(0,0,0,0)');
+  g.addColorStop(0.5,'rgba(0,0,0,0.35)');
+  g.addColorStop(1,'rgba(0,0,0,1)');
+  x.fillStyle=g; x.fillRect(0,0,cw,ch);
+  x.globalCompositeOperation='source-over';
   sh.src=c.toDataURL('image/png');
   sh.style.width=cw+'px'; sh.style.height=ch+'px';
   sh.style.left=(pill.offsetLeft-pad)+'px';
@@ -1230,7 +1253,7 @@ document.getElementById('shareBtn').addEventListener('click',async()=>{
 
 /* ================= 產生器宣傳頁 QR ================= */
 /* ↓↓↓ 把產生器發佈到網路後，只要改這一行網址即可（QR 會自動更新） ↓↓↓ */
-const SITE_URL = 'https://your-generator-url.example';   // TODO: 換成正式網址
+const SITE_URL = 'https://isnow09.github.io/ubereats-profile-maker/';
 let qr=null;
 function renderPromoQR(){
   document.getElementById('pSiteUrl').textContent = SITE_URL.replace(/^https?:\/\//,'');
