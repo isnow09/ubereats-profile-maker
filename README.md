@@ -5,7 +5,7 @@
 ## 檔案
 
 - `index.html` — 正式版（部署時用這支，GitHub Pages / Cloudflare Pages 預設會讀 `index.html`）
-- `ubereats-profile-maker-v8.html` — 與 `index.html` 內容相同的備份／原始檔名
+- `food-delivery-profile-maker-v8.html` — 與 `index.html` 內容相同的備份／原始檔名
 
 ## 功能
 
@@ -15,12 +15,14 @@
 - 一鍵輸出 PNG，檔名為 `[名字]外送員簡介_YYYYMMDDhhmmss.png`
 - 輸出圖片底部含系統推廣區塊與網址 QR（只出現在輸出圖，不在網頁預覽）
 
-## 部署後要做一件事
+## 正式網址
 
-發佈到網路後，打開 `index.html`，找到這一行，把網址換成你的正式網址（QR 會自動指向新網址）：
+https://isnow09.github.io/food-delivery-profile-maker/
+
+若日後搬家，改 `index.html` 裡的 `SITE_URL` 這一行即可，輸出圖底部的網址文字與 QR 會自動更新：
 
 ```js
-const SITE_URL = 'https://your-generator-url.example';   // TODO: 換成正式網址
+const SITE_URL = 'https://isnow09.github.io/food-delivery-profile-maker/';
 ```
 
 ## 授權說明
